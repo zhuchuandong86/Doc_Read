@@ -137,12 +137,12 @@ with tab1:
         status_text.success("✅ 视觉提取完毕！即将进入大脑深度研判...")
         progress_bar.empty()
         st.markdown("###### 🧠 步骤三：深度研判报告生成中")
-        with st.spinner('DeepSeek 正在进行交叉比对与财务推演 (请查看命令行后台的打字机输出)...'):
+        with st.spinner('红蓝军 正在进行交叉比对与财务推演 (请查看命令行后台的打字机输出)...'):
             summary = generate_final_summary(all_content)
             
         st.success("🎉 研判报告已生成！")
         st.markdown("---")
-        st.markdown(summary)
+        st.markdown(summary, unsafe_allow_html=True)
         
 # ---------- 替换开始 ----------
         # 生成带时间戳的最终持久化文件
@@ -221,7 +221,8 @@ with tab2:
             
         st.success("🎉 基于 MD 的研判报告已极速生成！")
         st.markdown("---")
-        st.markdown(summary)
+        st.markdown(summary, unsafe_allow_html=True)
+
         
         # 3. 生成带时间戳的持久化文件
         final_md_content = f"# AI 深度洞察与业务研判报告\n\n{summary}\n\n---\n## 📚 附录：已清洗的分页底层数据\n<details markdown=\"1\">\n<summary>👉 点击展开查看各页原始核心数据 (已过滤噪音)</summary>\n\n{all_content}\n</details>"
