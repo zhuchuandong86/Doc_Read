@@ -33,7 +33,7 @@ os.environ['NO_PROXY'] = 'api.openai.rnd.huawei.com'
 # 2. 页面基本设置
 # ==========================================
 st.set_page_config(
-    page_title="AI 经营分析工作台",
+    page_title="AI 材料深度解读工作台",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -41,16 +41,59 @@ st.set_page_config(
 
 st.markdown("""
     <style>
+    /* 隐藏默认菜单和页脚 */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
+    
+    /* ---------------- 排版美化核心 ---------------- */
+    /* 1. 调整正文字体和整体行高 */
+    .stMarkdown p {
+        font-size: 16px !important;
+        line-height: 1.7 !important;
+        margin-bottom: 12px !important;
+    }
+
+    /* 2. 解决列表项之间空隙过大、松散的问题 */
+    .stMarkdown li {
+        margin-bottom: 6px !important; /* 列表项之间的间距 */
+    }
+    .stMarkdown li > p {
+        margin-bottom: 0px !important; /* 去除列表内段落的自带大边距 */
+        margin-top: 0px !important;
+    }
+    .stMarkdown ul, .stMarkdown ol {
+        margin-bottom: 20px !important;
+        padding-left: 28px !important;
+    }
+
+    /* 3. 各级标题分层分级，增强视觉层级感 */
+    .stMarkdown h2 {
+        font-size: 22px !important;
+        color: #1a202c !important;
+        border-bottom: 2px solid #ebf4ff !important; /* 增加底边框区分大模块 */
+        padding-bottom: 8px !important;
+        margin-top: 35px !important;
+        margin-bottom: 16px !important;
+    }
+    .stMarkdown h3 {
+        font-size: 18px !important;
+        color: #2b6cb0 !important; /* 小标题用深蓝色区分 */
+        margin-top: 24px !important;
+        margin-bottom: 12px !important;
+        font-weight: 600 !important;
+    }
+    .stMarkdown strong {
+        color: #111827 !important; /* 加粗字体颜色加深，突出重点 */
+    }
     </style>
     """, unsafe_allow_html=True)
 
+    
 with st.sidebar:
     st.image("https://img.icons8.com/color/96/000000/combo-chart--v1.png", width=60)
     st.title("系统面板")
     st.markdown("---")
-    max_pages = st.number_input("最大解析页数 (防超载)", min_value=1, max_value=500, value=50)
+    max_pages = st.number_input("最大解析页数 (防超载)", min_value=1, max_value=500, value=100)
     st.markdown("---")
     st.success(f"📁 **数据存储路径已锁定:**\n\n所有的原文件和报告都会自动保存在:\n`{OUTPUT_DIR}`")
 
@@ -72,6 +115,13 @@ with tab1:
         type=["pdf", "png", "jpg", "jpeg"], 
         accept_multiple_files=True,
         key="full_pipeline"
+    )
+    
+    # 👇 新增：用户自定义分析需求输入框
+    user_requirement_full = st.text_area(
+        "🎯 自定义分析侧重点 (选填)", 
+        placeholder="例如：请重点提取各省份的 ARPU 值对比；或者重点关注政企DICT业务的增长和风险...",
+        height=60
     )
 
     if st.button("🚀 开始全流程深度研判", type="primary", key="btn_full"):
@@ -136,9 +186,11 @@ with tab1:
         # 3. 大脑深度总结
         status_text.success("✅ 视觉提取完毕！即将进入大脑深度研判...")
         progress_bar.empty()
+        # 👇 修改点：在调用总结函数时，传入 user_requirement_full
+        # 大约在原来第 118 行附近
         st.markdown("###### 🧠 步骤三：深度研判报告生成中")
-        with st.spinner('红蓝军 正在进行交叉比对与财务推演 (请查看命令行后台的打字机输出)...'):
-            summary = generate_final_summary(all_content)
+        with st.spinner('红蓝军 正在激烈变乱 (请查看命令行后台的打字机输出)...'):
+            summary = generate_final_summary(all_content, user_requirement_full)  # 👈 传入参数
             
         st.success("🎉 研判报告已生成！")
         st.markdown("---")
@@ -186,6 +238,9 @@ with tab1:
 # ---------------------------------------------------------
 # 工作流 B：断点续传 (直接吃 MD -> 总结 -> 网页)
 # ---------------------------------------------------------
+# ---------------------------------------------------------
+# 工作流 B：断点续传 (直接吃 MD -> 总结 -> 网页)
+# ---------------------------------------------------------
 with tab2:
     st.markdown("###### 📥 步骤一：上传已有的 Markdown 数据文件")
     st.info("如果你之前提取的文本保存为了 `.md` 文件，将它传到这里，将直接跳过看图环节。")
@@ -194,6 +249,14 @@ with tab2:
         "请将带有提取文本的 .md 文件拖拽至此", 
         type=["md"],
         key="md_pipeline"
+    )
+    
+    # 👇 新增：用户自定义分析需求输入框 (注意 key 不能重复)
+    user_requirement_md = st.text_area(
+        "🎯 自定义分析侧重点 (选填)", 
+        placeholder="例如：请重点提取各省份的 ARPU 值对比；或者重点关注政企DICT业务的增长和风险...",
+        height=100,
+        key="req_md"
     )
     
     if st.button("⚡ 直接生成深度分析与 HTML", type="primary", key="btn_md"):
@@ -215,9 +278,11 @@ with tab2:
             st.stop()
             
         # 2. 开始总结
+        # 👇 修改点：在调用总结函数时，传入 user_requirement_md
+        # 大约在原来第 185 行附近
         st.markdown("###### 🧠 步骤二：大脑深度研判报告生成中")
         with st.spinner('正在直接读取文本并进行研判分析...'):
-            summary = generate_final_summary(all_content)
+            summary = generate_final_summary(all_content, user_requirement_md)  # 👈 传入参数
             
         st.success("🎉 基于 MD 的研判报告已极速生成！")
         st.markdown("---")
